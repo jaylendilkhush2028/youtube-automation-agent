@@ -1,11 +1,14 @@
 // Google Gemini (has a free tier — the guide's recommended starting point).
 const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
-// `gemini-flash-latest` is an alias that always tracks the current stable Flash
-// model, so the app doesn't break every time Google retires a specific version
-// (this has already happened: 1.5 → 2.5 → 3.x). Pin an exact model with
-// GEMINI_MODEL=... if you'd rather not auto-follow the latest.
-const DEFAULT_MODEL = 'gemini-flash-latest';
+// `gemini-flash-lite-latest` is an alias that tracks the current stable
+// Flash-Lite model. Two reasons for this default: (1) an alias won't break when
+// Google retires a specific version (already happened: 1.5 → 2.5 → 3.x), and
+// (2) Flash-Lite has a far larger free-tier daily quota than the newest full
+// Flash, which allows only ~20 requests/day free — you'd run out in a couple of
+// pipeline runs. Prefer higher quality and have billing? Set
+// GEMINI_MODEL=gemini-flash-latest (or any specific model) to override.
+const DEFAULT_MODEL = 'gemini-flash-lite-latest';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
