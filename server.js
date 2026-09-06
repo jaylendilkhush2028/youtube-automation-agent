@@ -168,5 +168,5 @@ app.listen(PORT, () => {
   const int = integrationStatus();
   logger.ok('server', `dashboard → http://localhost:${PORT}`);
   logger.info('server', `text provider: ${int.textProvider}${int.textProvider === 'mock' ? ' (offline demo — add a key in Setup to go live)' : ''}`);
-  logger.info('server', `youtube upload: ${int.youtube ? 'connected' : 'mock'} · tts: ${int.elevenlabs ? 'elevenlabs' : 'mock'}`);
+  logger.info('server', `youtube upload: ${int.youtube ? 'connected' : 'mock'} · voice: ${int.voice}`);
 });

@@ -53,27 +53,69 @@ async function refresh() {
 }
 
 // ---- top-level render --------------------------------------------------------
-function render() {
+function render(opts = {}) {
   if (!STATE) return;
   renderStatus();
   renderChain();
   $('#navApprovals').textContent = STATE.counts.awaitingApproval || '';
   $$('#sidenav button').forEach((b) => b.classList.toggle('active', b.dataset.view === VIEW));
   const main = $('#main');
-  if (VIEW === 'pipeline') main.innerHTML = viewPipeline();
-  else if (VIEW === 'approvals') main.innerHTML = viewApprovals();
-  else if (VIEW === 'analytics') main.innerHTML = viewAnalytics();
-  else if (VIEW === 'activity') main.innerHTML = viewActivity();
-  else if (VIEW === 'setup') main.innerHTML = viewSetup();
+  const html =
+    VIEW === 'pipeline' ? viewPipeline()
+    : VIEW === 'approvals' ? viewApprovals()
+    : VIEW === 'analytics' ? viewAnalytics()
+    : VIEW === 'activity' ? viewActivity()
+    : VIEW === 'setup' ? viewSetup()
+    : '';
+  // Background polls re-render on a timer; when they do, keep whatever the user is
+  // mid-edit (typed text, checkbox state, focus + caret) so forms never get wiped.
+  if (opts.preserve) setMainPreserving(main, html);
+  else main.innerHTML = html;
+}
+
+// Stable identity for an editable control, from whichever data-* attribute it carries.
+const FIELD_ATTRS = ['key', 'set', 'setb', 'setn', 'notes', 'gate'];
+function fieldKeyOf(el) {
+  if (!el || !el.dataset) return null;
+  for (const a of FIELD_ATTRS) if (el.dataset[a] != null) return `${a}:${el.dataset[a]}`;
+  return null;
+}
+function setMainPreserving(main, html) {
+  const active = document.activeElement;
+  const activeKey = main.contains(active) ? fieldKeyOf(active) : null;
+  const selStart = activeKey ? active.selectionStart : null;
+  const selEnd = activeKey ? active.selectionEnd : null;
+
+  const snap = new Map();
+  $$('input,textarea,select', main).forEach((el) => {
+    const k = fieldKeyOf(el);
+    if (k) snap.set(k, el.type === 'checkbox' ? el.checked : el.value);
+  });
+
+  main.innerHTML = html;
+
+  $$('input,textarea,select', main).forEach((el) => {
+    const k = fieldKeyOf(el);
+    if (k && snap.has(k)) {
+      if (el.type === 'checkbox') el.checked = snap.get(k);
+      else el.value = snap.get(k);
+    }
+  });
+  if (activeKey) {
+    const el = $$('input,textarea,select', main).find((e) => fieldKeyOf(e) === activeKey);
+    if (el) { el.focus(); try { el.setSelectionRange(selStart, selEnd); } catch { /* non-text input */ } }
+  }
 }
 
 function renderStatus() {
   const i = STATE.integrations;
   const pill = (on, label, cls = '') => `<span class="pill ${on ? 'on' : (cls || 'off')}"><span class="dot"></span>${label}</span>`;
+  const voice = i.voice || (i.elevenlabs ? 'elevenlabs' : 'mock');
+  const voiceLabel = { elevenlabs: 'Voice: ElevenLabs', say: 'Voice: free (system)', mock: 'Voice: mock' }[voice] || 'Voice: mock';
   $('#statusPills').innerHTML = [
     pill(i.textProvider !== 'mock', `AI: ${i.textProvider}`, i.textProvider === 'mock' ? 'warn' : ''),
     pill(i.youtube, i.youtube ? 'YouTube: live' : 'YouTube: mock', 'warn'),
-    pill(i.elevenlabs, i.elevenlabs ? 'Voice: ElevenLabs' : 'Voice: mock', 'warn'),
+    pill(voice !== 'mock', voiceLabel, 'warn'),
   ].join('');
 }
 
@@ -305,9 +347,10 @@ function viewSetup() {
     <h2>YouTube & Voice</h2>
     <div class="grid2">
       ${keyField('YOUTUBE_API_KEY', 'YouTube Data API key', i.youtubeReadOnly, 'For trend & competitor research (read-only)')}
-      ${keyField('ELEVENLABS_API_KEY', 'ElevenLabs key', i.elevenlabs, 'Optional — better voiceover')}
+      ${keyField('ELEVENLABS_API_KEY', 'ElevenLabs key', i.elevenlabs, `Optional — most natural voice. Currently using: ${voiceName(i.voice)}`)}
     </div>
-    <div class="note red">Uploading requires OAuth (client id/secret + refresh token). Run <code>npm run setup</code> in the terminal to connect a channel — the wizard walks you through Google Cloud Console. Don't point it at a monetized channel while learning.</div>
+    <div class="note">Voiceover works out of the box with a <b>free built-in voice</b> — no key needed. Add an ElevenLabs key only if you want the most natural narration.</div>
+    <div class="note red">Uploading requires OAuth (client id/secret + refresh token). Put your OAuth client id/secret in <code>.env</code>, then run <code>npm run yt-token</code> in the terminal to connect a channel. Don't point it at a monetized channel while learning.</div>
     <button class="btn primary" data-act="save-keys">Save keys</button>
   </div>
 
@@ -334,6 +377,7 @@ function keyField(env, label, present, desc = '') {
 }
 
 function gateName(k) { return { factualReview: 'Factual review', mediaRights: 'Media-rights confirmation', humanSignoff: 'Human sign-off' }[k]; }
+function voiceName(v) { return { elevenlabs: 'ElevenLabs', say: 'free system voice', mock: 'mock (no audio)' }[v] || 'free system voice'; }
 
 // ---- Video detail modal ------------------------------------------------------
 let MODAL_TAB = 'script';
@@ -497,4 +541,11 @@ function setPath(obj, path, val) {
 
 // ---- boot --------------------------------------------------------------------
 refresh();
-setInterval(() => { if ($('#modalBackdrop').hidden) refresh(); }, 2500);
+// Background refresh. Never interrupt the user: skip while a modal is open or
+// while they're focused in a field, and preserve in-progress edits otherwise.
+setInterval(async () => {
+  if (!$('#modalBackdrop').hidden) return;
+  const el = document.activeElement;
+  if (el && el.matches && el.matches('input, textarea, select')) return;
+  try { STATE = await api('/api/state'); render({ preserve: true }); } catch (e) { /* server maybe restarting */ }
+}, 2500);

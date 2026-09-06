@@ -85,6 +85,26 @@ export function hasKeyFor(name) {
   }
 }
 
+/**
+ * Which voice engine will actually be used, given the environment:
+ *   - 'elevenlabs' when an ElevenLabs key is set (most natural, paid)
+ *   - 'say'        free, local, no key — uses the built-in macOS `say` voices
+ *   - 'mock'       no audio; the narration script is saved as text
+ * Override with VOICE_PROVIDER=elevenlabs|say|mock (default: auto-pick the best available).
+ */
+export function resolveVoiceProvider() {
+  const pref = (process.env.VOICE_PROVIDER || 'auto').toLowerCase();
+  const hasEleven = !!process.env.ELEVENLABS_API_KEY;
+  const hasSay = process.platform === 'darwin'; // macOS ships `say` + `afconvert`
+  if (pref === 'elevenlabs') return hasEleven ? 'elevenlabs' : 'mock';
+  if (pref === 'say' || pref === 'system') return hasSay ? 'say' : 'mock';
+  if (pref === 'mock') return 'mock';
+  // auto
+  if (hasEleven) return 'elevenlabs';
+  if (hasSay) return 'say';
+  return 'mock';
+}
+
 /** A snapshot of which integrations are wired up, for the dashboard status panel. */
 export function integrationStatus() {
   return {
@@ -97,6 +117,7 @@ export function integrationStatus() {
     },
     youtube: !!(process.env.YOUTUBE_CLIENT_ID && process.env.YOUTUBE_CLIENT_SECRET && process.env.YOUTUBE_REFRESH_TOKEN),
     youtubeReadOnly: !!process.env.YOUTUBE_API_KEY,
+    voice: resolveVoiceProvider(),
     elevenlabs: !!process.env.ELEVENLABS_API_KEY,
   };
 }

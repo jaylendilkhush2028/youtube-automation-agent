@@ -10,7 +10,8 @@
     "setup": "node setup.js",
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.js",
+    "yt-token": "node scripts/get-youtube-token.js"
   },
   "bin": {
     "yt-agent": "server.js"

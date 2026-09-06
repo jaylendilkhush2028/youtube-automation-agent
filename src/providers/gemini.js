@@ -3,7 +3,7 @@ const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 export async function generateText({ system, prompt, temperature = 0.8, maxTokens = 2048 }) {
   const key = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const body = {
     systemInstruction: system ? { parts: [{ text: system }] } : undefined,
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
