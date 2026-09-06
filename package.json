@@ -1,0 +1,28 @@
+{
+  "name": "youtube-automation-agent",
+  "version": "1.0.0",
+  "description": "A 7-agent production crew for a YouTube channel: strategy, script, thumbnails, SEO, production, publishing, and analytics — chained, with a feedback loop and human approval gates.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "setup": "node setup.js",
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "seed": "node scripts/seed.js"
+  },
+  "bin": {
+    "yt-agent": "server.js"
+  },
+  "keywords": [
+    "youtube",
+    "automation",
+    "ai-agents",
+    "content-pipeline"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
