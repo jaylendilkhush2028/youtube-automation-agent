@@ -117,6 +117,9 @@ export function integrationStatus() {
     },
     youtube: !!(process.env.YOUTUBE_CLIENT_ID && process.env.YOUTUBE_CLIENT_SECRET && process.env.YOUTUBE_REFRESH_TOKEN),
     youtubeReadOnly: !!process.env.YOUTUBE_API_KEY,
+    youtubeClientId: !!process.env.YOUTUBE_CLIENT_ID,
+    youtubeClientSecret: !!process.env.YOUTUBE_CLIENT_SECRET,
+    youtubeRefreshToken: !!process.env.YOUTUBE_REFRESH_TOKEN,
     voice: resolveVoiceProvider(),
     elevenlabs: !!process.env.ELEVENLABS_API_KEY,
   };

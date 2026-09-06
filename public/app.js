@@ -344,13 +344,22 @@ function viewSetup() {
   </div>
 
   <div class="section">
-    <h2>YouTube & Voice</h2>
+    <h2>YouTube <span class="hint">${i.youtube ? 'Uploads connected ✓' : 'Uploads not connected — add OAuth below to post videos'}</span></h2>
     <div class="grid2">
-      ${keyField('YOUTUBE_API_KEY', 'YouTube Data API key', i.youtubeReadOnly, 'For trend & competitor research (read-only)')}
-      ${keyField('ELEVENLABS_API_KEY', 'ElevenLabs key', i.elevenlabs, `Optional — most natural voice. Currently using: ${voiceName(i.voice)}`)}
+      ${keyField('YOUTUBE_API_KEY', 'YouTube Data API key', i.youtubeReadOnly, 'Read-only: trend & competitor research')}
+      ${keyField('YOUTUBE_CLIENT_ID', 'OAuth Client ID', i.youtubeClientId, 'Cloud Console → Credentials → OAuth client (Desktop app)')}
+      ${keyField('YOUTUBE_CLIENT_SECRET', 'OAuth Client Secret', i.youtubeClientSecret, 'From that same OAuth client')}
     </div>
+    <div class="note red">To post videos: save your Client ID + Secret above, then run <code>npm run yt-token</code> in the terminal — it opens Google's consent screen and writes the <b>refresh token</b> ${i.youtubeRefreshToken ? '<span style="color:var(--green)">(✓ set)</span>' : '(not set yet)'} into <code>.env</code>. Don't point it at a monetized channel while learning.</div>
+    <button class="btn primary" data-act="save-keys">Save keys</button>
+  </div>
+
+  <div class="section">
+    <h2>Voice <span class="hint">Currently: ${voiceName(i.voice)}</span></h2>
     <div class="note">Voiceover works out of the box with a <b>free built-in voice</b> — no key needed. Add an ElevenLabs key only if you want the most natural narration.</div>
-    <div class="note red">Uploading requires OAuth (client id/secret + refresh token). Put your OAuth client id/secret in <code>.env</code>, then run <code>npm run yt-token</code> in the terminal to connect a channel. Don't point it at a monetized channel while learning.</div>
+    <div class="grid2">
+      ${keyField('ELEVENLABS_API_KEY', 'ElevenLabs key', i.elevenlabs, 'Optional — most natural voice (paid)')}
+    </div>
     <button class="btn primary" data-act="save-keys">Save keys</button>
   </div>
 
